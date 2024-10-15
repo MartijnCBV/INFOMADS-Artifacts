@@ -35,38 +35,44 @@ def generate_instance_output(instance: Instance) -> str:
 		]
 	)
 
-def available_bounds(student: Student, timeslot: int) -> tuple[bool, int, int]:
+def available_bounds_from_timeslot(student: Student, timeslot: int) -> tuple[bool, int, int]:
 	overlapping = []
+	total_length = 0
+	bound_left = timeslot
 
 	for obligation in student["obligations"]:
-		if timeslot >= obligation["start"] and timeslot <= obligation["end"]:
+		start, end = obligation["start"], obligation["end"]
+		if start <= bound_left <= end:
 			overlapping.append(obligation)
 
 	if len(overlapping) == 0:
-		return True, timeslot, config["timeslots"]
+		return True, config["timeslots"]
 	elif config["can_overlap"] == False:
-		return False, 0, 0
+		return False, 0
 
-	total_length = 0
 	outer_left = min([obligation["start"] for obligation in overlapping])
 	outer_right = max([obligation["end"] for obligation in overlapping])
 
-	# additional overlaps
+	# additional overlaps from other obligations
 	for obligation in student["obligations"]:
-		if ((outer_left <= obligation["start"] <= outer_right) or \
-			(outer_left <= obligation["end"] <= outer_right)) and \
+		start, end = obligation["start"], obligation["end"]
+		if ((outer_left <= start <= outer_right) or \
+			(outer_left <= end <= outer_right)) and \
 			any([obligation["id"] == o["id"] for o in overlapping]) == False:
 			overlapping.append(obligation)
 
-	for obligation in overlapping:
-		total_length += obligation["length"]
+	for i in range(len(overlapping)):
+		# check if gap between obligations is larger than the length of the obligations
+		if i + 1 < len(overlapping):
+			total_length += max(overlapping[i+1]["start"] - overlapping[i]["start"], overlapping[i]["length"])
+		else:
+			total_length += overlapping[i]["length"]
 
-	if outer_left + total_length - 1 >= timeslot:
-		return False, 0, 0
+	# check if the total length of the obligations exceeds our left bound
+	if outer_left + total_length - 1 >= bound_left:
+		return False, 0
 
-	total_length -= timeslot - outer_left
-
-	bound_left = timeslot
+	total_length -= bound_left - outer_left
 
 	if total_length > 0:
 		bound_right = outer_right - total_length
@@ -76,7 +82,7 @@ def available_bounds(student: Student, timeslot: int) -> tuple[bool, int, int]:
 	if bound_right < bound_left:
 		return False, 0, 0
 	else:
-		return True, bound_left, bound_right
+		return True, bound_right
 
 def generate_instance() -> str:
 	instance: Instance = {
@@ -93,12 +99,12 @@ def generate_instance() -> str:
 		id = 1
 
 		for timeslot in range(1, config["timeslots"]):
-			can_add, bound_left, bound_right = available_bounds(student, timeslot)
-			if can_add and random.random() < config["obligation_probability"] and bound_left == timeslot:
+			can_add, bound_right = available_bounds_from_timeslot(student, timeslot)
+			if can_add and random.random() < config["obligation_probability"]:
 				ob_max = config["obligation_max_length"]
-				length = random.randint(1, min(bound_right, ob_max))
+				bound_max_length = random.randint(1, min(bound_right - timeslot, ob_max))
 
-				end = min(timeslot + length - 1, config["timeslots"])
+				end = min(timeslot + bound_max_length - 1, config["timeslots"])
 				length = random.randint(1, end - timeslot + 1) if config["is_flexible"] else end - timeslot + 1
 
 				student["obligations"].append({
