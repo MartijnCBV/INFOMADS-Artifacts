@@ -5,6 +5,7 @@ class Config(TypedDict):
 	timeslots: int
 	students: int
 	obligation_max_length: tuple[int, int]
+	obligation_probability: float
 	borrel_length_range: tuple[int, int]
 	borrel_amount: int
 	can_overlap: bool

@@ -35,14 +35,6 @@ def generate_instance_output(instance: Instance) -> str:
 		]
 	)
 
-def can_add_obligation(student: Student, timeslot: int) -> bool:
-	for obligation in student["obligations"]:
-		if timeslot >= obligation["start"] and timeslot <= obligation["end"]:
-			return False
-
-
-	return True
-
 def available_bounds(student: Student, timeslot: int) -> tuple[bool, int, int]:
 	overlapping = []
 
@@ -67,13 +59,11 @@ def available_bounds(student: Student, timeslot: int) -> tuple[bool, int, int]:
 			overlapping.append(obligation)
 
 	for obligation in overlapping:
-		print(obligation["length"])
 		total_length += obligation["length"]
 
 	if outer_left + total_length - 1 >= timeslot:
 		return False, 0, 0
 
-	print(timeslot, total_length)
 	total_length -= timeslot - outer_left
 
 	bound_left = timeslot
@@ -89,23 +79,22 @@ def available_bounds(student: Student, timeslot: int) -> tuple[bool, int, int]:
 		return True, bound_left, bound_right
 
 def generate_instance() -> str:
-	new_instance: Instance = {
+	instance: Instance = {
 		"timeslots": config["timeslots"],
 		"borrels": [],
 		"students": [],
 	}
 
-	for i in range(config["borrel_amount"]):
-		new_instance["borrels"].append(random.randint(*config["borrel_length_range"]))
+	for _ in range(config["borrel_amount"]):
+		instance["borrels"].append(random.randint(*config["borrel_length_range"]))
 
-	for i in range(config["students"]):
+	for _ in range(config["students"]):
 		student: Student = {"obligations": []}
 		id = 1
 
 		for timeslot in range(1, config["timeslots"]):
-			print(timeslot)
 			can_add, bound_left, bound_right = available_bounds(student, timeslot)
-			if can_add and random.random() < 0.5 and bound_left == timeslot:
+			if can_add and random.random() < config["obligation_probability"] and bound_left == timeslot:
 				ob_max = config["obligation_max_length"]
 				length = random.randint(1, min(bound_right, ob_max))
 
@@ -119,45 +108,21 @@ def generate_instance() -> str:
 					"length": length,
 				})
 				id += 1
-			print(student)
 
-		new_instance["students"].append(student)
+		instance["students"].append(student)
 
-	return generate_instance_output(new_instance)
+	return generate_instance_output(instance)
 
 def run():
 	os.makedirs("outputs", exist_ok=True)
-	# timeNow = datetime.datetime.now().timestamp()
-	timeNow = 1
+	timeNow = datetime.datetime.now().timestamp()
 	f = open(f'outputs/instances-{timeNow}.txt', "a")
 	f.truncate(0)
 
-	for i in range(config["instances"]):
+	for _ in range(config["instances"]):
 		output = generate_instance()
 		f.write(output + '\n\n')
-		print(output)
-
 
 	f.close()
 
-# random.seed(500)
 run()
-
-
-
-# student_test = {
-# 	"obligations": [
-# 		{"start": 1, "end": 4, "length": 2},
-# 		{"start": 2, "end": 3, "length": 1},
-# 		{"start": 2, "end": 2, "length": 1},
-# 	]
-# }
-
-student_test = {
-	"obligations": [
-		{"id": 1, "start": 5, "end": 9, "length": 2},
-		{"id": 2, "start": 6, "end": 9, "length": 2},
-	]
-}
-
-# print(available_bounds(student_test, 7))
