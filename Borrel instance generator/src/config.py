@@ -2,8 +2,9 @@ from typings.types import Config
 
 config: Config = {
 	"debug": False,
-	"instances": 1,
-	"timeslots": 20,
+	"include_images": False,
+	"instances": 5,
+	"timeslots": 10,
 	"students": 4,
 
 	"obligation_max_length": 6,

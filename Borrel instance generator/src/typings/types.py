@@ -2,6 +2,7 @@ from typing import TypedDict
 
 class Config(TypedDict):
 	debug: bool
+	include_images: bool
 	instances: int
 	timeslots: int
 	students: int

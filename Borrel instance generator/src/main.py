@@ -4,6 +4,7 @@ import os
 from typings.types import Student, Instance, Obligation
 from config import config
 import numpy as np
+from playwright.sync_api import sync_playwright, Playwright, Browser, Page
 
 def generate_student_output(student_index: int, instance: Instance) -> str:
 	student = instance["students"][student_index]
@@ -128,23 +129,41 @@ def generate_instance() -> str:
 
 	return generate_instance_output(instance)
 
+def init_playwright(playwright: Playwright) -> tuple[Browser, Page]:
+	browser = playwright.chromium.launch()
+	page = browser.new_page()
+	page.goto('https://martijncbv.github.io/INFOMADS-Visualiser/')
+
+	return browser, page
+
 def run():
-	os.makedirs("outputs", exist_ok=True)
+	with sync_playwright() as playwright:
+		if config["include_images"]:
+			browser, page = init_playwright(playwright)
 
-	timeNow = datetime.datetime.now().timestamp()
+		os.makedirs("outputs", exist_ok=True)
 
-	if config["debug"]:
-		seed = 82
-		random.seed(seed)
-		timeNow = f'debug-{seed}'
+		timeNow = datetime.datetime.now().timestamp()
 
-	f = open(f'outputs/instances-{timeNow}.txt', "a")
-	f.truncate(0)
+		if config["debug"]:
+			seed = 80
+			random.seed(seed)
+			timeNow = f'debug-{seed}'
 
-	for _ in range(config["instances"]):
-		output = generate_instance()
-		f.write(output + '\n\n')
+		f = open(f'outputs/instances-{timeNow}.txt', "a")
+		f.truncate(0)
 
-	f.close()
+		for i in range(config["instances"]):
+			output = generate_instance()
+			f.write(output + '\n\n')
+
+			if config["include_images"]:
+				page.locator('#problem-in').fill(output)
+				page.locator('#problem-submit').click()
+				page.locator('svg').screenshot(path=f'outputs/images/instance-{timeNow}-{i}.png')
+
+		if config["include_images"]:
+			browser.close()
+		f.close()
 
 run()
