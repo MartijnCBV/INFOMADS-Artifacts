@@ -3,6 +3,7 @@ import datetime
 import os
 from typings.types import Student, Instance, Obligation
 from config import config
+import numpy as np
 
 def generate_student_output(student_index: int, instance: Instance) -> str:
 	student = instance["students"][student_index]
@@ -35,9 +36,38 @@ def generate_instance_output(instance: Instance) -> str:
 		]
 	)
 
+def fill_slots(timeslot: int, obligations: list[Obligation]) -> list[int]:
+	filled_slots = []
+	for obligation in sorted(obligations, key=lambda o: o["id"], reverse=True):
+		obligation_fill = np.arange(obligation["start"], obligation["end"] + 1, step=1).tolist()
+		obligation_fill = list(set(obligation_fill) - set(filled_slots))
+
+		diff = (obligation["end"] - obligation["start"] + 1) - len(obligation_fill)
+		remove = (obligation["end"] - obligation["start"] + 1) - obligation["length"] - diff
+
+		start = next((i for i, item in enumerate(obligation_fill) if item >= timeslot), obligation["end"] - remove)
+		obligation_fill = list(set(obligation_fill) - set(obligation_fill[start:start+remove]))
+
+		if len(obligation_fill) < obligation["length"]:
+			return filled_slots
+		else:
+			filled_slots.extend(obligation_fill)
+
+	return sorted(filled_slots)
+
+def slots_occupied_by_obligations(obligations: list[Obligation]) -> int:
+	total_length = 0
+	for i in range(len(obligations)):
+		# check if gap between obligations is larger than the length of the obligations
+		if i + 1 < len(obligations):
+			total_length += max(obligations[i+1]["start"] - obligations[i]["start"], obligations[i]["length"])
+		else:
+			total_length += obligations[i]["length"]
+
+	return total_length
+
 def available_bounds_from_timeslot(student: Student, timeslot: int) -> tuple[bool, int, int]:
 	overlapping = []
-	total_length = 0
 	bound_left = timeslot
 
 	for obligation in student["obligations"]:
@@ -61,27 +91,18 @@ def available_bounds_from_timeslot(student: Student, timeslot: int) -> tuple[boo
 			any([obligation["id"] == o["id"] for o in overlapping]) == False:
 			overlapping.append(obligation)
 
-	for i in range(len(overlapping)):
-		# check if gap between obligations is larger than the length of the obligations
-		if i + 1 < len(overlapping):
-			total_length += max(overlapping[i+1]["start"] - overlapping[i]["start"], overlapping[i]["length"])
-		else:
-			total_length += overlapping[i]["length"]
+	total_length = slots_occupied_by_obligations(overlapping)
+	filled_slots = fill_slots(timeslot, overlapping)
 
-	# check if the total length of the obligations exceeds our left bound
-	if outer_left + total_length - 1 >= bound_left:
-		return False, 0
-
-	total_length -= bound_left - outer_left
-
-	if total_length > 0:
-		bound_right = outer_right - total_length
-	else:
-		bound_right = config["timeslots"]
+	# pick slot closest to left bound
+	bound_right = outer_right \
+		if filled_slots[len(filled_slots) - 1] < bound_left \
+		else next(x for x in filled_slots if x >= bound_left) - 1
 
 	if bound_right < bound_left:
-		return False, 0, 0
+		return False, 0
 	else:
+		bound_right = bound_right if outer_right is not bound_right else config["timeslots"]
 		return True, bound_right
 
 def generate_instance() -> str:
@@ -98,11 +119,11 @@ def generate_instance() -> str:
 		student: Student = {"obligations": []}
 		id = 1
 
-		for timeslot in range(1, config["timeslots"]):
+		for timeslot in range(1, config["timeslots"] + 1):
 			can_add, bound_right = available_bounds_from_timeslot(student, timeslot)
 			if can_add and random.random() < config["obligation_probability"]:
 				ob_max = config["obligation_max_length"]
-				bound_max_length = random.randint(1, min(bound_right - timeslot, ob_max))
+				bound_max_length = random.randint(1, min(bound_right - timeslot + 1, ob_max))
 
 				end = min(timeslot + bound_max_length - 1, config["timeslots"])
 				length = random.randint(1, end - timeslot + 1) if config["is_flexible"] else end - timeslot + 1
@@ -121,7 +142,14 @@ def generate_instance() -> str:
 
 def run():
 	os.makedirs("outputs", exist_ok=True)
+
 	timeNow = datetime.datetime.now().timestamp()
+
+	if config["debug"]:
+		seed = 82
+		random.seed(seed)
+		timeNow = f'debug-{seed}'
+
 	f = open(f'outputs/instances-{timeNow}.txt', "a")
 	f.truncate(0)
 

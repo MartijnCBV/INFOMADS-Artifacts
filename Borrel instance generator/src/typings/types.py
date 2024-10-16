@@ -1,6 +1,7 @@
 from typing import TypedDict
 
 class Config(TypedDict):
+	debug: bool
 	instances: int
 	timeslots: int
 	students: int
