@@ -40,7 +40,7 @@ def fill_slots(timeslot: int, obligations: list[Obligation]) -> list[int]:
 	filled_slots = []
 	for obligation in sorted(obligations, key=lambda o: o["id"], reverse=True):
 		obligation_fill = np.arange(obligation["start"], obligation["end"] + 1, step=1).tolist()
-		obligation_fill = list(set(obligation_fill) - set(filled_slots))
+		obligation_fill = sorted(list(set(obligation_fill) - set(filled_slots)))
 
 		diff = (obligation["end"] - obligation["start"] + 1) - len(obligation_fill)
 		remove = (obligation["end"] - obligation["start"] + 1) - obligation["length"] - diff
@@ -54,17 +54,6 @@ def fill_slots(timeslot: int, obligations: list[Obligation]) -> list[int]:
 			filled_slots.extend(obligation_fill)
 
 	return sorted(filled_slots)
-
-def slots_occupied_by_obligations(obligations: list[Obligation]) -> int:
-	total_length = 0
-	for i in range(len(obligations)):
-		# check if gap between obligations is larger than the length of the obligations
-		if i + 1 < len(obligations):
-			total_length += max(obligations[i+1]["start"] - obligations[i]["start"], obligations[i]["length"])
-		else:
-			total_length += obligations[i]["length"]
-
-	return total_length
 
 def available_bounds_from_timeslot(student: Student, timeslot: int) -> tuple[bool, int, int]:
 	overlapping = []
@@ -91,7 +80,6 @@ def available_bounds_from_timeslot(student: Student, timeslot: int) -> tuple[boo
 			any([obligation["id"] == o["id"] for o in overlapping]) == False:
 			overlapping.append(obligation)
 
-	total_length = slots_occupied_by_obligations(overlapping)
 	filled_slots = fill_slots(timeslot, overlapping)
 
 	# pick slot closest to left bound
