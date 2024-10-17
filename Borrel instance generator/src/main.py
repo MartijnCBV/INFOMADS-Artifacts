@@ -104,13 +104,14 @@ def generate_instance() -> str:
 	for _ in range(config["borrel_amount"]):
 		instance["borrels"].append(random.randint(*config["borrel_length_range"]))
 
-	for _ in range(config["students"]):
+	for i in range(config["students"]):
 		student: Student = {"obligations": []}
 		id = 1
+		obligation_probability = config["obligation_probabilities"][i % len(config["obligation_probabilities"])]
 
 		for timeslot in range(1, config["timeslots"] + 1):
 			can_add, bound_right = available_bounds_from_timeslot(student, timeslot)
-			if can_add and random.random() < config["obligation_probability"]:
+			if can_add and random.random() < obligation_probability:
 				ob_max = config["obligation_max_length"]
 				bound_max_length = random.randint(1, min(bound_right - timeslot + 1, ob_max))
 
