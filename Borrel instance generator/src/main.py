@@ -194,17 +194,19 @@ def run():
 		if config["include_images"]:
 			browser, page = init_playwright(playwright)
 
-		timeNow = datetime.datetime.now().timestamp()
+		name = config["save_folder_name"] \
+			if len(config["save_folder_name"]) > 0 \
+			else datetime.datetime.now().timestamp()
 
 		if config["debug"]:
 			seed = 80
 			random.seed(seed)
-			timeNow = f'debug-{seed}'
+			name = f'debug-{seed}'
 
-		os.makedirs(f'outputs/instances-{timeNow}', exist_ok=True)
+		os.makedirs(f'outputs/instances-{name}', exist_ok=True)
 
 		for i in range(config["instances"]):
-			f = open(f'outputs/instances-{timeNow}/{i+1}.txt', "a")
+			f = open(f'outputs/instances-{name}/{i+1}.txt', "a")
 			f.truncate(0)
 			output = generate_instance()
 			f.write(output)

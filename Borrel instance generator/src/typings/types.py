@@ -7,6 +7,7 @@ class Algorithm(Enum):
 
 class Config(TypedDict):
 	debug: bool
+	save_folder_name: str
 	include_images: bool
 	instances: int
 	timeslots: int

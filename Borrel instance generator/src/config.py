@@ -1,7 +1,8 @@
 from typings.types import Config, Algorithm
 
 config: Config = {
-	"debug": True,
+	"debug": False,
+	"save_folder_name": "output",
 	"include_images": False,
 	"instances": 1,
 	"timeslots": 20,
