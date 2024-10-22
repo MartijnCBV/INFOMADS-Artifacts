@@ -25,7 +25,7 @@ class Config(TypedDict):
 	obligations_per_student: int
 	total_obligation_time_per_student: int
 
-	algoritm: Algorithm
+	algorithm: Algorithm
 
 class Obligation(TypedDict):
 	id: int

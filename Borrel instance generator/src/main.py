@@ -163,7 +163,7 @@ def generate_exact_obligation() -> Student:
 	return student
 
 def generate_student(index):
-	match config["algoritm"]:
+	match config["algorithm"]:
 		case Algorithm.RANDOM:
 			return generate_random_obligation(index)
 		case Algorithm.EXACT:

@@ -7,7 +7,7 @@ config: Config = {
 	"instances": 1,
 	"timeslots": 20,
 	"students": 4,
-	"algoritm": Algorithm.EXACT,
+	"algorithm": Algorithm.EXACT,
 
 	# Exact config
 	"obligations_per_student": 5,
