@@ -14,7 +14,12 @@ if __name__ == "__main__":
     data_b = read_bench(os.path.abspath("../data/general_overlap.json"))
     data_b = cut_bench(data_b, 40)
     timing_double(data_a, data_b, "No Overlap", "Overlap", "Instance", os.path.abspath("../data/plots/overlap_time.pdf"))
+    memory_double(data_a, data_b, "No Overlap", "Overlap", "Instance", os.path.abspath("../data/plots/overlap_mem.pdf"), dashcycle=True)
     # no. borrels
     data = read_bench(os.path.abspath("../data/increasing_borrels.json"))
     timing(data, "No. Borrels", os.path.abspath("../data/plots/no_borrels_time.pdf"), dashcycle=True)
     memory(data, "No. Borrels", os.path.abspath("../data/plots/no_borrels_mem.pdf"), dashcycle=True)
+    # no. timeslots
+    data = read_bench(os.path.abspath("../data/increasing_timeslots.json"))
+    timing(data, "No. Timeslots", os.path.abspath("../data/plots/no_timeslots_time.pdf"), xs=list(range(10, 101, 10)), dashcycle=True)
+    memory(data, "No. Timeslots", os.path.abspath("../data/plots/no_timeslots_mem.pdf"), xs=list(range(10, 101, 10)), dashcycle=True)

@@ -4,6 +4,16 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 
+def calc_ncol(length: int):
+    ncol = 2
+    r = list(range(2, length))
+    r.reverse()
+    for i in r:
+        if length % i == 0:
+            ncol = i
+            break
+    return ncol
+
 def lin_graph(data, xl: str, yl: str, path: str, xs: list[int]=[], dashcycle=False):
     plt.rcParams.update({'font.size': 14})
     ks = list(data[0].keys())
@@ -22,7 +32,7 @@ def lin_graph(data, xl: str, yl: str, path: str, xs: list[int]=[], dashcycle=Fal
             plt.plot(xs, ys[k], label=k)
     plt.xlabel(xl)
     plt.ylabel(yl)
-    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', ncol=3, borderaxespad=0., frameon=False)
+    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', ncol=calc_ncol(len(ks)), borderaxespad=0., frameon=False)
     plt.tight_layout()
     plt.savefig(path, format="pdf", bbox_inches='tight')
     plt.clf()
@@ -39,7 +49,7 @@ def bar_graph(data, xl: str, yl: str, path: str):
     plt.xlabel(xl)
     plt.ylabel(yl)
     plt.xticks(xs + bw * (nb - 1) / 2, xs)
-    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', ncol=3, borderaxespad=0., frameon=False)
+    plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', ncol=calc_ncol(len(ks)), borderaxespad=0., frameon=False)
     plt.tight_layout()
     plt.savefig(path, format="pdf", bbox_inches='tight')
     plt.clf()
@@ -108,5 +118,22 @@ def timing_double(a: Dict[str, Bench], b: Dict[str, Bench], al, bl, xl: str, pat
         dat = proc.item(int(i)-1)
         dat[f"{bl}(avg)"] = b[key]["pytimer"]["avgtim"]
         dat[f"{bl}(best)"] = b[key]["pytimer"]["besttim"]
+        proc.put(int(i)-1, dat)
+    lin_graph(proc, xl, "Time(sec)", path, xs=xs, dashcycle=dashcycle)
+
+def memory_double(a: Dict[str, Bench], b: Dict[str, Bench], al, bl, xl: str, path: str, xs: list[int]=[], dashcycle=False):
+    proc = np.empty(len(a.keys()), object)
+    for key in a:
+        i = re.sub(r"\D", "", key)
+        dat = {
+            f"{al}(avg)": a[key]["solverr"]["avgmem"],
+            f"{al}(best)": a[key]["solverr"]["bestmem"]
+        }
+        proc.put(int(i)-1, dat)
+    for key in b:
+        i = re.sub(r"\D", "", key)
+        dat = proc.item(int(i)-1)
+        dat[f"{bl}(avg)"] = b[key]["solverr"]["avgmem"]
+        dat[f"{bl}(best)"] = b[key]["solverr"]["bestmem"]
         proc.put(int(i)-1, dat)
     lin_graph(proc, xl, "Memory(MB)", path, xs=xs, dashcycle=dashcycle)
