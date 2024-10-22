@@ -142,8 +142,6 @@ def run():
 		if config["include_images"]:
 			browser, page = init_playwright(playwright)
 
-		os.makedirs("outputs", exist_ok=True)
-
 		timeNow = datetime.datetime.now().timestamp()
 
 		if config["debug"]:
@@ -151,12 +149,14 @@ def run():
 			random.seed(seed)
 			timeNow = f'debug-{seed}'
 
-		f = open(f'outputs/instances-{timeNow}.txt', "a")
-		f.truncate(0)
+		os.makedirs(f'outputs/instances-{timeNow}', exist_ok=True)
 
 		for i in range(config["instances"]):
+			f = open(f'outputs/instances-{timeNow}/{i+1}.txt', "a")
+			f.truncate(0)
 			output = generate_instance()
-			f.write(output + '\n\n')
+			f.write(output)
+			f.close()
 
 			if config["include_images"]:
 				page.locator('#problem-in').fill(output)
@@ -165,6 +165,5 @@ def run():
 
 		if config["include_images"]:
 			browser.close()
-		f.close()
 
 run()
