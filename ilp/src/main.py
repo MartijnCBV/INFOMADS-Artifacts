@@ -1,6 +1,9 @@
-from glpkhandler import *
-import os
+from benches import *
 
 if __name__ == "__main__":
-    res = run_dir(os.path.abspath("../benchmarks/increasing_borrels"), 10)
-    dump_bench("../data", "increasing_borrels.json", res)
+    # run(GENERAL_NO_OVERLAP)
+    # run(GENERAL_OVERLAP)
+    # run(INCREASING_BORREL_SIZE)
+    # run(INCREASING_BORRELS)
+    # run(INCREASING_STUDENTS)
+    run(INCREASING_TIMESLOTS)

@@ -120,15 +120,14 @@ def run_glpk() -> Run:
         "pytimer": round(end - start, 6)
     }
 
-
-
 def run_dir(path: str, times: int) -> Dict[str, Bench]:
     fs = next(os.walk(path), (None, None, []))[2]
     bs = dict()
     for f in fs:
         write_to_temp(os.path.join(path, f))
         rs = []
-        for _ in range(times+1):
+        for i in range(times+1):
+            print(f"FILE::{f}::RUN::{i}")
             rs.append(run_glpk())
         bs[f] = to_bench(rs)
     return bs
