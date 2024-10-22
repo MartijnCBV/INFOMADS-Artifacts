@@ -1,5 +1,6 @@
 from glpkhandler import *
+import os
 
 if __name__ == "__main__":
-    write_to_temp({path to input file})
-    run_glpk()
+    res = run_dir(os.path.abspath("../benchmarks/increasing_borrels"), 10)
+    dump_bench("../data", "increasing_borrels.json", res)

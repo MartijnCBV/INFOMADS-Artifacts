@@ -90,14 +90,3 @@ param b :=
 {'\n'.join([f"{j+1} {b(i, j)}" for j in range(m(i))])};
 
 end;"""
-
-# teststr = """10
-#  2
-#  1,3
-#  4
-#  2,1,4,3,5,10,6
-#  1,2,5,1
-#  1,4,10,3
-#  4,1,3,1,1,6,5,3,9,2,8,8,1"""
-
-# print(print_i(parse(teststr)))
