@@ -126,7 +126,7 @@ def run_dir(path: str, times: int) -> Dict[str, Bench]:
     for f in fs:
         write_to_temp(os.path.join(path, f))
         rs = []
-        for i in range(times+1):
+        for i in range(times):
             print(f"FILE::{f}::RUN::{i}")
             rs.append(run_glpk())
         bs[f] = to_bench(rs)
