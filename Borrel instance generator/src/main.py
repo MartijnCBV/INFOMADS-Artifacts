@@ -1,7 +1,7 @@
 import random
 import datetime
 import os
-from typings.types import Student, Instance, Obligation
+from typings.types import Student, Instance, Obligation, Algorithm
 from config import config
 import numpy as np
 from playwright.sync_api import sync_playwright, Playwright, Browser, Page
@@ -94,6 +94,79 @@ def available_bounds_from_timeslot(student: Student, timeslot: int) -> tuple[boo
 		bound_right = bound_right if outer_right is not bound_right else config["timeslots"]
 		return True, bound_right
 
+def generate_random_obligation(index) -> Student:
+	student: Student = {"obligations": []}
+	id = 1
+	obligation_probability = config["obligation_probabilities"][index % len(config["obligation_probabilities"])]
+
+	for timeslot in range(1, config["timeslots"] + 1):
+		can_add, bound_right = available_bounds_from_timeslot(student, timeslot)
+		if can_add and random.random() < obligation_probability:
+			ob_max = config["obligation_max_length"]
+			bound_max_length = random.randint(1, min(bound_right - timeslot + 1, ob_max))
+
+			end = min(timeslot + bound_max_length - 1, config["timeslots"])
+			length = random.randint(1, end - timeslot + 1) if config["is_flexible"] else end - timeslot + 1
+
+			student["obligations"].append({
+				"id": id,
+				"start": timeslot,
+				"end": end,
+				"length": length,
+			})
+			id += 1
+
+	return student
+
+def random_sum_partition(n, p):
+    # Generate n-1 random "cut points" and add 0 and p as boundaries
+    cuts = sorted(random.sample(range(1, p), n - 1))
+    # Generate parts by taking the differences between successive cuts
+    parts = [cuts[0]] + [cuts[i] - cuts[i-1] for i in range(1, n-1)] + [p - cuts[-1]]
+    return parts
+
+def generate_exact_obligation() -> Student:
+	student: Student = {"obligations": []}
+	obligation_length_values = random_sum_partition(config["obligations_per_student"], config["total_obligation_time_per_student"])
+
+	for i in range(config["obligations_per_student"]):
+		last_obligation = student["obligations"][-1] if len(student["obligations"]) > 0 else None
+		start = 1 if last_obligation is None else last_obligation["start"] + last_obligation["length"]
+		min_end = start + obligation_length_values[i] - 1
+		end = random.randint(min_end, min(min_end+5, config["timeslots"]))
+
+		if end > config["timeslots"]:
+			exceed = end - config["timeslots"]
+			end = config["timeslots"]
+			start = start - exceed
+
+		student["obligations"].append({
+			"id": i + 1,
+			"start": start,
+			"end": end,
+			"length": obligation_length_values[i],
+		})
+
+	gaps = random_sum_partition(config["obligations_per_student"], config["timeslots"] - config["total_obligation_time_per_student"])
+	print(gaps)
+
+	for i, gap in enumerate(gaps):
+		for j in range(i, config["obligations_per_student"]):
+			student["obligations"][j]["start"] += gap
+			student["obligations"][j]["end"] += gap
+
+			if student["obligations"][j]["end"] > config["timeslots"]:
+				student["obligations"][j]["end"] = config["timeslots"]
+
+	return student
+
+def generate_student(index):
+	match config["algoritm"]:
+		case Algorithm.RANDOM:
+			return generate_random_obligation(index)
+		case Algorithm.EXACT:
+			return generate_exact_obligation()
+
 def generate_instance() -> str:
 	instance: Instance = {
 		"timeslots": config["timeslots"],
@@ -105,28 +178,7 @@ def generate_instance() -> str:
 		instance["borrels"].append(random.randint(*config["borrel_length_range"]))
 
 	for i in range(config["students"]):
-		student: Student = {"obligations": []}
-		id = 1
-		obligation_probability = config["obligation_probabilities"][i % len(config["obligation_probabilities"])]
-
-		for timeslot in range(1, config["timeslots"] + 1):
-			can_add, bound_right = available_bounds_from_timeslot(student, timeslot)
-			if can_add and random.random() < obligation_probability:
-				ob_max = config["obligation_max_length"]
-				bound_max_length = random.randint(1, min(bound_right - timeslot + 1, ob_max))
-
-				end = min(timeslot + bound_max_length - 1, config["timeslots"])
-				length = random.randint(1, end - timeslot + 1) if config["is_flexible"] else end - timeslot + 1
-
-				student["obligations"].append({
-					"id": id,
-					"start": timeslot,
-					"end": end,
-					"length": length,
-				})
-				id += 1
-
-		instance["students"].append(student)
+		instance["students"].append(generate_student(i))
 
 	return generate_instance_output(instance)
 

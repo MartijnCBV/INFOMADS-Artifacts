@@ -1,12 +1,18 @@
-from typings.types import Config
+from typings.types import Config, Algorithm
 
 config: Config = {
-	"debug": False,
+	"debug": True,
 	"include_images": False,
-	"instances": 100,
+	"instances": 1,
 	"timeslots": 20,
-	"students": 10,
+	"students": 4,
+	"algoritm": Algorithm.EXACT,
 
+	# Exact config
+	"obligations_per_student": 5,
+	"total_obligation_time_per_student": 10,
+
+	# Random config
 	"obligation_max_length": 6,
 	"obligation_probabilities": [1, 0.5, 0.25, 0.1],
 
