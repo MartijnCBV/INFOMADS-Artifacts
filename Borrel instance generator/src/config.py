@@ -1,12 +1,12 @@
 from typings.types import Config, Algorithm
 
 config: Config = {
-	"debug": False,
+	"debug": True,
 	"save_folder_name": "output",
 	"include_images": False,
 	"instances": 1,
 	"timeslots": 20,
-	"students": 4,
+	"students": 1,
 	"algorithm": Algorithm.EXACT,
 
 	# Exact config
@@ -20,6 +20,6 @@ config: Config = {
 	"borrel_length_range": (1, 3),
 	"borrel_amount": 2,
 
-	"can_overlap": True,
+	"can_overlap": False,
 	"is_flexible": True,
 }

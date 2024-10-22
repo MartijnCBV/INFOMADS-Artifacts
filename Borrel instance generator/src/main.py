@@ -120,9 +120,7 @@ def generate_random_obligation(index) -> Student:
 	return student
 
 def random_sum_partition(values, sum_value, range_start):
-    # Generate n-1 random "cut points" and add 0 and p as boundaries
     cuts = sorted(random.sample(range(range_start, sum_value), values - 1))
-    # Generate parts by taking the differences between successive cuts
     parts = [cuts[0]] + [cuts[i] - cuts[i-1] for i in range(1, values-1)] + [sum_value - cuts[-1]]
     return parts
 
@@ -134,7 +132,8 @@ def generate_exact_obligation() -> Student:
 		last_obligation = student["obligations"][-1] if len(student["obligations"]) > 0 else None
 		start = 1 if last_obligation is None else last_obligation["start"] + last_obligation["length"]
 		min_end = start + obligation_length_values[i] - 1
-		end = random.randint(min_end, min(min_end+5, config["timeslots"]))
+		max_end = min(min_end + 5, config["timeslots"]) if config["is_flexible"] else min_end
+		end = random.randint(min_end, max_end)
 
 		if end > config["timeslots"]:
 			exceed = end - config["timeslots"]
@@ -157,8 +156,19 @@ def generate_exact_obligation() -> Student:
 			student["obligations"][j]["start"] += gap
 			student["obligations"][j]["end"] += gap
 
-			if student["obligations"][j]["end"] > config["timeslots"]:
-				student["obligations"][j]["end"] = config["timeslots"]
+			if student["obligations"][i]["end"] > config["timeslots"]:
+				student["obligations"][i]["end"] = config["timeslots"]
+
+	if config["can_overlap"] == False:
+		for i in range(0, len(student["obligations"])):
+			overlap = next((o for o in student["obligations"][i+1:] if o["start"] <= student["obligations"][i]["end"]), None)
+			obligation = student["obligations"][i]
+
+			if overlap is not None:
+				end_range = (obligation["start"] + obligation["length"], overlap["start"] - 1)
+				min_end = min(end_range)
+				max_end = max(end_range)
+				obligation["end"] = random.randint(min_end, max_end)
 
 	return student
 
@@ -218,7 +228,7 @@ def run():
 			if config["include_images"]:
 				page.locator('#problem-in').fill(output)
 				page.locator('#problem-submit').click()
-				page.locator('svg').screenshot(path=f'outputs/images/instance-{timeNow}-{i}.png')
+				page.locator('svg').screenshot(path=f'outputs/images/instance-{name}-{i}.png')
 
 		if config["include_images"]:
 			browser.close()
