@@ -9,7 +9,7 @@ param p{i in 1..n, j in 1..ell[i]};     # number of timeslots needed for obligat
 param b{h in 1..m};                     # number of timeslots borrel h takes
 
 # decision variables
-var x{h in 1..m, i in 1..n, j in 1..ell[i]}, binary;    # conflict between borrel h and obligation j of student i
+var x{h in 1..m, i in 1..n}, binary;    # conflict between borrel h and obligation j of student i
 
 # auxiliary variables
 var y{i in 1..n, j in 1..ell[i], k in 1..t}, binary;    # if student i assigns timeslot k to obligation j
@@ -19,7 +19,7 @@ var z{h in 1..m, k in 1..t}, binary;                    # if borrel h starts at 
 
 # 1. every obligation must be scheduled exactly p_{i,j} times within its time window
 s.t. obligation_timeslot{i in 1..n, j in 1..ell[i]}:
-    sum{k in r[i,j]..d[i,j]-1} y[i,j,k] = p[i,j];
+    sum{k in r[i,j]..d[i,j]} y[i,j,k] = p[i,j];
 
 # 2. obligations of the same student should not overlap
 s.t. no_overlap{i in 1..n, k in 1..t}:
@@ -27,7 +27,7 @@ s.t. no_overlap{i in 1..n, k in 1..t}:
 
 # 3. obligations can only be scheduled in the interval (r_{i,j},d_{i,j}]
 s.t. obligation_bounds{i in 1..n, j in 1..ell[i], k in 1..t}:
-    y[i,j,k] <= (if k >= r[i,j] && k < d[i,j] then 1 else 0);
+    y[i,j,k] <= (if k >= r[i,j] && k <= d[i,j] then 1 else 0);
 
 # 4. each borrel must be scheduled exactly once
 s.t. schedule_borrel{h in 1..m}:
@@ -43,22 +43,22 @@ s.t. no_borrel_overlap{k in 1..t}:
 
 # 6. conflict between borrel and obligation
 s.t. conflict{h in 1..m, i in 1..n, j in 1..ell[i], k in 1..t, k2 in k..min(t, k+b[h]-1)}:
-    x[h,i,j] >= y[i,j,k2] + z[h,k] - 1;
+    x[h,i] >= y[i,j,k2] + z[h,k] - 1;
 
 # objective function: minimize conflicts
 minimize total_conflicts:
-    sum{h in 1..m, i in 1..n, j in 1..ell[i]} x[h,i,j];
+    sum{h in 1..m, i in 1..n} x[h,i];
 
 
 solve;
 
 
 # report
-printf "Cost: %d\n", sum{h in 1..m, i in 1..n, j in 1..ell[i]} x[h,i,j];
+printf "Cost: %d\n", sum{h in 1..m, i in 1..n} x[h,i];
 printf "Borrels:\n";
 printf {h in 1..m, k in 1..t: z[h,k] = 1} "Borrel %d starts at time slot %d\n", h, k;
 printf "Student obligations:\n";
 printf {i in 1..n, j in 1..ell[i], k in 1..t: y[i,j,k] = 1} "Student %d obligation %d assigned time slot %d\n", i, j, k;
-printf {h in 1..m, i in 1..n, j in 1..ell[i]: x[h,i,j] = 1} "Conflict between borrel %d and obligation %d of student %d\n", h,i,j;
+printf {h in 1..m, i in 1..n: x[h,i] = 1} "Conflict between borrel %d and student %d\n", h,i;
 
 end;

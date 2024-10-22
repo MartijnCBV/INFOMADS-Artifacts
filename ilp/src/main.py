@@ -1,5 +1,9 @@
-from glpkhandler import *
+from benches import *
 
 if __name__ == "__main__":
-    write_to_temp({path to input file})
-    run_glpk()
+    # run(GENERAL_NO_OVERLAP)
+    # run(GENERAL_OVERLAP)
+    # run(INCREASING_BORREL_SIZE)
+    # run(INCREASING_BORRELS)
+    # run(INCREASING_STUDENTS)
+    run(INCREASING_TIMESLOTS)
