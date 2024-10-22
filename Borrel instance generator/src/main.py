@@ -5,6 +5,7 @@ from typings.types import Student, Instance, Obligation, Algorithm
 from config import config
 import numpy as np
 from playwright.sync_api import sync_playwright, Playwright, Browser, Page
+import shutil
 
 def generate_student_output(student_index: int, instance: Instance) -> str:
 	student = instance["students"][student_index]
@@ -118,16 +119,16 @@ def generate_random_obligation(index) -> Student:
 
 	return student
 
-def random_sum_partition(n, p):
+def random_sum_partition(values, sum_value, range_start):
     # Generate n-1 random "cut points" and add 0 and p as boundaries
-    cuts = sorted(random.sample(range(1, p), n - 1))
+    cuts = sorted(random.sample(range(range_start, sum_value), values - 1))
     # Generate parts by taking the differences between successive cuts
-    parts = [cuts[0]] + [cuts[i] - cuts[i-1] for i in range(1, n-1)] + [p - cuts[-1]]
+    parts = [cuts[0]] + [cuts[i] - cuts[i-1] for i in range(1, values-1)] + [sum_value - cuts[-1]]
     return parts
 
 def generate_exact_obligation() -> Student:
 	student: Student = {"obligations": []}
-	obligation_length_values = random_sum_partition(config["obligations_per_student"], config["total_obligation_time_per_student"])
+	obligation_length_values = random_sum_partition(config["obligations_per_student"], config["total_obligation_time_per_student"], 1)
 
 	for i in range(config["obligations_per_student"]):
 		last_obligation = student["obligations"][-1] if len(student["obligations"]) > 0 else None
@@ -147,8 +148,9 @@ def generate_exact_obligation() -> Student:
 			"length": obligation_length_values[i],
 		})
 
-	gaps = random_sum_partition(config["obligations_per_student"], config["timeslots"] - config["total_obligation_time_per_student"])
-	print(gaps)
+	gaps = random_sum_partition(config["obligations_per_student"], config["timeslots"] - config["total_obligation_time_per_student"], 0) \
+		if config["timeslots"] > config["total_obligation_time_per_student"] \
+		else [0] * config["obligations_per_student"]
 
 	for i, gap in enumerate(gaps):
 		for j in range(i, config["obligations_per_student"]):
@@ -203,6 +205,7 @@ def run():
 			random.seed(seed)
 			name = f'debug-{seed}'
 
+		shutil.rmtree(f'outputs/instances-{name}')
 		os.makedirs(f'outputs/instances-{name}', exist_ok=True)
 
 		for i in range(config["instances"]):
