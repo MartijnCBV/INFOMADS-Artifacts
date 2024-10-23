@@ -124,6 +124,11 @@ def random_sum_partition(values, sum_value, range_start):
     parts = [cuts[0]] + [cuts[i] - cuts[i-1] for i in range(1, values-1)] + [sum_value - cuts[-1]]
     return parts
 
+def random_sum_partition_choice(values, sum_value, range_start):
+    cuts = sorted(random.choices(range(range_start, sum_value), k = values - 1))
+    parts = [cuts[0]] + [cuts[i] - cuts[i-1] for i in range(1, values-1)] + [sum_value - cuts[-1]]
+    return parts
+
 def generate_exact_obligation() -> Student:
 	student: Student = {"obligations": []}
 	obligation_length_values = random_sum_partition(config["obligations_per_student"], config["total_obligation_time_per_student"], 1)
@@ -147,7 +152,7 @@ def generate_exact_obligation() -> Student:
 			"length": obligation_length_values[i],
 		})
 
-	gaps = random_sum_partition(config["obligations_per_student"], config["timeslots"] - config["total_obligation_time_per_student"], 0) \
+	gaps = random_sum_partition_choice(config["obligations_per_student"], config["timeslots"] - config["total_obligation_time_per_student"], 0) \
 		if config["timeslots"] > config["total_obligation_time_per_student"] \
 		else [0] * config["obligations_per_student"]
 
