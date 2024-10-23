@@ -3,6 +3,7 @@ from typing import Dict
 import re
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 def calc_ncol(length: int):
     ncol = 2
@@ -17,6 +18,7 @@ def calc_ncol(length: int):
 def lin_graph(data, xl: str, yl: str, path: str, xs: list[int]=[], dashcycle=False):
     plt.rcParams.update({'font.size': 14})
     ks = list(data[0].keys())
+    tracker = xs == []
     if xs == []:
         xs = list(range(1, len(data)+1))
     ys = {k: [e[k] for e in data] for k in ks}
@@ -30,6 +32,8 @@ def lin_graph(data, xl: str, yl: str, path: str, xs: list[int]=[], dashcycle=Fal
             cyc = not cyc
         else:
             plt.plot(xs, ys[k], label=k)
+    if tracker:
+        plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.xlabel(xl)
     plt.ylabel(yl)
     plt.legend(bbox_to_anchor=(0.5, -0.2), loc='upper center', ncol=calc_ncol(len(ks)), borderaxespad=0., frameon=False)
