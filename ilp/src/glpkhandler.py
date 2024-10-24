@@ -1,4 +1,5 @@
 from secrets import GLPK_PATH
+from simplifier import simplify
 from model import *
 from typing import TypedDict, Dict
 from statistics import fmean
@@ -9,9 +10,11 @@ DATA_PATH = os.path.abspath("./temp/temp.dat")
 REPORT_PATH = os.path.abspath("./temp/report.txt")
 LOG_PATH = os.path.abspath("./temp/log.log")
 
-def write_to_temp(path: str):
+def write_to_temp(path: str, simpl: bool):
     s = open(path, "r").read()
     i = parse(s)
+    if simpl:
+        simplify(i)
     proc = print_i(i)
     temp_dir = "./temp"
     if not os.path.exists(temp_dir):
@@ -120,11 +123,11 @@ def run_glpk() -> Run:
         "pytimer": round(end - start, 6)
     }
 
-def run_dir(path: str, times: int) -> Dict[str, Bench]:
+def run_dir(path: str, times: int, simpl: bool) -> Dict[str, Bench]:
     fs = next(os.walk(path), (None, None, []))[2]
     bs = dict()
     for f in fs:
-        write_to_temp(os.path.join(path, f))
+        write_to_temp(os.path.join(path, f), simpl)
         rs = []
         for i in range(times):
             print(f"FILE::{f}::RUN::{i}")
