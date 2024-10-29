@@ -220,7 +220,7 @@ def run():
 			random.seed(seed)
 			name = f'debug-{seed}'
 
-		shutil.rmtree(f'outputs/instances-{name}')
+		shutil.rmtree(f'outputs/instances-{name}', ignore_errors=True)
 		os.makedirs(f'outputs/instances-{name}', exist_ok=True)
 
 		for i in range(config["instances"]):
