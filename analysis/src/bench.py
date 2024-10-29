@@ -26,7 +26,6 @@ def read_bench(path: str) -> Dict[str, Bench]:
     return data
 
 def cut_bench(bench: Dict[str, Bench], size: int):
-    ks = list(bench.keys())
     cut = dict()
     for k in bench:
         i = re.sub(r"\D", "", k)

@@ -1,15 +1,8 @@
 from model import *
-import json
 
 def simplify(instance: Instance):
     for _ in range(n(instance)):
         merge_obligations(instance)
-    print(json.dumps(instance, indent=4))
-    # prune_same(instance)
-
-def prune_same(instance: Instance):
-    pruned = list(dict.fromkeys(instance["students"]))
-    instance["students"] = pruned
 
 def obl_len(obl: Obligation) -> int:
     return obl["end"] - obl["start"] + 1
